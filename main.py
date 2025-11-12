@@ -56,6 +56,7 @@ class SpatialViewer(QMainWindow):
         self.compute_manager = ComputeManager()
         self.umap_worker = None
         self.progress_dialog = None
+        self.pending_view = None  # Track view to switch to after UMAP computation
         self.initUI()
 
     def initUI(self):
@@ -440,6 +441,8 @@ class SpatialViewer(QMainWindow):
                     QMessageBox.Yes | QMessageBox.No,
                 )
                 if reply == QMessageBox.Yes:
+                    # Set pending view to switch after UMAP computation
+                    self.pending_view = view
                     self.show_umap_dialog()
                     return
                 else:
@@ -458,6 +461,8 @@ class SpatialViewer(QMainWindow):
                         QMessageBox.Yes | QMessageBox.No,
                     )
                     if reply == QMessageBox.Yes:
+                        # Set pending view to switch after UMAP computation
+                        self.pending_view = view
                         self.show_umap_dialog(n_components=3)
                         return
                     else:
@@ -512,6 +517,10 @@ class SpatialViewer(QMainWindow):
         self.adata.obsm.update(adata.obsm)
         self.adata.uns.update(adata.uns)
 
+        # Update .obsp if present (neighbor graph)
+        if hasattr(adata, "obsp") and len(adata.obsp) > 0:
+            self.adata.obsp.update(adata.obsp)
+
         # Close progress dialog
         if self.progress_dialog:
             self.progress_dialog.close()
@@ -528,8 +537,20 @@ class SpatialViewer(QMainWindow):
             f"UMAP computation completed!\n\nGenerated {dims}D UMAP coordinates for {self.adata.n_obs:,} cells.",
         )
 
-        # Update plot if in UMAP view
-        if self.current_view in ["umap_2d", "umap_3d"]:
+        # Switch to pending view if set, otherwise update current view
+        if self.pending_view is not None:
+            # Activate the appropriate radio button
+            if self.pending_view == "umap_2d":
+                self.umap_2d_radio.setChecked(True)
+            elif self.pending_view == "umap_3d":
+                self.umap_3d_radio.setChecked(True)
+
+            # Change view and update plot
+            self.current_view = self.pending_view
+            self.pending_view = None  # Reset pending view
+            self.update_plot()
+        elif self.current_view in ["umap_2d", "umap_3d"]:
+            # Update plot if already in UMAP view
             self.update_plot()
 
     def on_umap_error(self, error_msg):
