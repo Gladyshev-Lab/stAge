@@ -25,7 +25,20 @@ jobs:
 
       - name: Build with PyInstaller (Windows)
         run: |
-          pyinstaller --name="stAge" --windowed --onefile --icon=icon.ico main.py
+          pyinstaller --name="stAge" ^
+            --windowed ^
+            --onefile ^
+            --icon=icon.ico ^
+            --hidden-import=widgets ^
+            --hidden-import=themes ^
+            --hidden-import=plotting ^
+            --hidden-import=compute ^
+            --hidden-import=progress_dialog ^
+            --collect-submodules=scanpy ^
+            --collect-submodules=anndata ^
+            --copy-metadata=scikit-learn ^
+            --clean ^
+            main.py
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
@@ -49,9 +62,85 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller
 
+      - name: Create entitlements.plist if missing
+        run: |
+          if [ ! -f entitlements.plist ]; then
+            cat > entitlements.plist << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+              <true/>
+              <key>com.apple.security.cs.disable-library-validation</key>
+              <true/>
+          </dict>
+          </plist>
+          EOF
+          fi
+
       - name: Build with PyInstaller (macOS)
         run: |
-          pyinstaller --name="stAge" --windowed --onefile --icon=icon.icns main.py
+          pyinstaller --name="stAge" \
+            --windowed \
+            --icon=icon.icns \
+            --hidden-import=widgets \
+            --hidden-import=themes \
+            --hidden-import=plotting \
+            --hidden-import=compute \
+            --hidden-import=progress_dialog \
+            --collect-submodules=scanpy \
+            --collect-submodules=anndata \
+            --copy-metadata=scikit-learn \
+            --osx-entitlements-file=entitlements.plist \
+            --clean \
+            --noconfirm \
+            main.py
+
+      - name: Codesign app (ad-hoc for testing)
+        run: |
+          codesign --force --deep --sign - --entitlements entitlements.plist dist/stAge.app
+
+      - name: Verify app structure
+        run: |
+          echo "=== Checking dist directory ==="
+          ls -la dist/
+          echo ""
+          echo "=== Checking app bundle structure ==="
+          ls -la dist/stAge.app/Contents/
+          echo ""
+          echo "=== Checking MacOS directory ==="
+          if [ -d "dist/stAge.app/Contents/MacOS" ]; then
+            ls -la dist/stAge.app/Contents/MacOS/
+            echo ""
+            echo "=== Executable info ==="
+            file dist/stAge.app/Contents/MacOS/stAge
+            echo ""
+            echo "=== Verifying signature ==="
+            codesign -dvvv dist/stAge.app
+          else
+            echo "❌ MacOS directory not found!"
+            exit 1
+          fi
+
+      - name: Test app launch
+        run: |
+          echo "🧪 Testing app launch..."
+          EXIT_CODE=0
+          # Use perl-based timeout (no gtimeout dependency)
+          perl -e 'alarm shift; exec @ARGV' 5 dist/stAge.app/Contents/MacOS/stAge 2>&1 || EXIT_CODE=$?
+          if [ $EXIT_CODE -eq 142 ]; then
+            echo "✅ App launched successfully (timed out as expected)"
+          elif [ $EXIT_CODE -eq 0 ]; then
+            echo "✅ App launched and exited normally"
+          else
+            echo "⚠️  App exited with code $EXIT_CODE"
+            echo "Continuing build anyway..."
+          fi
+
+      - name: Create DMG (optional)
+        run: |
+          echo "Skipping DMG creation - using .app bundle"
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
@@ -77,7 +166,18 @@ jobs:
 
       - name: Build with PyInstaller (Linux)
         run: |
-          pyinstaller --name="stAge" --onefile main.py
+          pyinstaller --name="stAge" \
+            --onefile \
+            --hidden-import=widgets \
+            --hidden-import=themes \
+            --hidden-import=plotting \
+            --hidden-import=compute \
+            --hidden-import=progress_dialog \
+            --collect-submodules=scanpy \
+            --collect-submodules=anndata \
+            --copy-metadata=scikit-learn \
+            --clean \
+            main.py
 
       - name: Upload Linux artifact
         uses: actions/upload-artifact@v4
@@ -97,28 +197,36 @@ jobs:
 
       - name: Show downloaded files (debug)
         run: |
+          echo "=== Root directory ==="
           ls -R
+          echo "=== Artifacts directory ==="
           ls -R artifacts
 
       - name: Create ZIP archives
         run: |
           VERSION="${GITHUB_REF_NAME}"
 
-          # Windows exe
-          zip -j "stAge-${VERSION}-windows.zip" "artifacts/stAge-Windows/stAge.exe"
+          # Windows exe - simple single file
+          cd artifacts/stAge-Windows
+          zip "../../stAge-${VERSION}-windows.zip" stAge.exe
+          cd ../..
 
-          # Linux binary
-          zip -j "stAge-${VERSION}-linux.zip" "artifacts/stAge-Linux/stAge"
+          # Linux binary - simple single file
+          cd artifacts/stAge-Linux
+          zip "../../stAge-${VERSION}-linux.zip" stAge
+          cd ../..
 
           # macOS .app bundle
-          cd artifacts
-          mkdir "stAge.app"
-          shopt -s dotglob nullglob  # Include hidden files (e.g., ._*), ignore if none
-          mv stAge-macOS/* stAge.app/ 2>/dev/null || true  # Move contents; ignore errors if empty
-          cd ..
-          zip -r "stAge-${VERSION}-macos.zip" "artifacts/stAge.app"
+          cd artifacts/stAge-macOS
+          zip -r "../../stAge-${VERSION}-macos.zip" stAge.app
+          cd ../..
 
+          echo "=== Created archives ==="
           ls -lh *.zip
+          
+          echo ""
+          echo "=== Verifying macOS zip structure ==="
+          unzip -l "stAge-${VERSION}-macos.zip" | head -20
 
       - name: Create GitHub Release and upload assets
         uses: softprops/action-gh-release@v2

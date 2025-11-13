@@ -4,3 +4,6 @@ scanpy
 anndata
 numpy
 pandas
+scikit-learn
+scipy
+h5py
