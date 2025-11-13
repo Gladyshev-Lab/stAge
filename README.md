@@ -1,6 +1,10 @@
 # stAge: Spatial Transcriptomics Aging Analysis
 
 <p align="center">
+  <img src="logo.svg" alt="pipeage logo" width="600"/>
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/Python-3.8+-blue.svg" alt="Python Version">
   <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License">
   <img src="shields.io/github/v/release/yourusername/stAge" alt="Release">
