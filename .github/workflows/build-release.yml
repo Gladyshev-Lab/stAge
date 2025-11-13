@@ -51,7 +51,7 @@ jobs:
       
       - name: Build with PyInstaller
         run: |
-          pyinstaller --name="stAge" --windowed --onefile --icon=icon.svg main.py
+          pyinstaller --name="stAge" --windowed --onefile --icon=icon.icns main.py
       
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
