@@ -1,7 +1,7 @@
 # stAge: Spatial Transcriptomics Aging Analysis
 
 <p align="center">
-  <img src="logo.svg" alt="pipeage logo" width="200"/>
+  <img src="logo.svg" alt="stAge logo" width="200"/>
 </p>
 
 <p align="center">
