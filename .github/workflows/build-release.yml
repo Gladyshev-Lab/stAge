@@ -1,9 +1,9 @@
-name: Build Executables
+name: Build & Release stAge
 
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*'       # например: v1.2.3
   workflow_dispatch:
 
 jobs:
@@ -11,22 +11,22 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-      
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pyinstaller
-      
-      - name: Build with PyInstaller
+
+      - name: Build with PyInstaller (Windows)
         run: |
           pyinstaller --name="stAge" --windowed --onefile --icon=icon.ico main.py
-      
+
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
@@ -37,22 +37,22 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-      
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pyinstaller
-      
-      - name: Build with PyInstaller
+
+      - name: Build with PyInstaller (macOS)
         run: |
           pyinstaller --name="stAge" --windowed --onefile --icon=icon.icns main.py
-      
+
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
         with:
@@ -63,24 +63,66 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-      
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pyinstaller
-      
-      - name: Build with PyInstaller
+
+      - name: Build with PyInstaller (Linux)
         run: |
           pyinstaller --name="stAge" --onefile main.py
-      
+
       - name: Upload Linux artifact
         uses: actions/upload-artifact@v4
         with:
           name: stAge-Linux
           path: dist/stAge
+
+  release:
+    needs: [build-windows, build-macos, build-linux]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Show downloaded files (debug)
+        run: |
+          ls -R
+          ls -R artifacts
+
+      - name: Create ZIP archives
+        run: |
+          VERSION="${GITHUB_REF_NAME}"
+
+          # Windows exe
+          zip -j "stAge-${VERSION}-windows.zip" "artifacts/stAge-Windows/stAge.exe"
+
+          # macOS .app bundle (нужен рекурсивный zip)
+          cd artifacts/stAge-macOS
+          zip -r "../../stAge-${VERSION}-macos.zip" "stAge.app"
+          cd ../../
+
+          # Linux бинарник
+          zip -j "stAge-${VERSION}-linux.zip" "artifacts/stAge-Linux/stAge"
+
+          ls -lh *.zip
+
+      - name: Create GitHub Release and upload assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            stAge-${{ github.ref_name }}-windows.zip
+            stAge-${{ github.ref_name }}-macos.zip
+            stAge-${{ github.ref_name }}-linux.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
