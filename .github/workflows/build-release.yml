@@ -24,6 +24,7 @@ jobs:
           pip install pyinstaller
 
       - name: Build with PyInstaller (Windows)
+        shell: cmd
         run: |
           pyinstaller --name="stAge" ^
             --windowed ^
@@ -36,7 +37,7 @@ jobs:
             --hidden-import=progress_dialog ^
             --collect-submodules=scanpy ^
             --collect-submodules=anndata ^
-            --copy-metadata=scikit-learn ^
+            --recursive-copy-metadata=scikit-learn ^
             --clean ^
             main.py
 
@@ -91,7 +92,7 @@ jobs:
             --hidden-import=progress_dialog \
             --collect-submodules=scanpy \
             --collect-submodules=anndata \
-            --copy-metadata=scikit-learn \
+            --recursive-copy-metadata=scikit-learn \
             --osx-entitlements-file=entitlements.plist \
             --clean \
             --noconfirm \
@@ -175,7 +176,7 @@ jobs:
             --hidden-import=progress_dialog \
             --collect-submodules=scanpy \
             --collect-submodules=anndata \
-            --copy-metadata=scikit-learn \
+            --recursive-copy-metadata=scikit-learn \
             --clean \
             main.py
 
