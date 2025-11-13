@@ -128,7 +128,6 @@ jobs:
         run: |
           echo "🧪 Testing app launch..."
           EXIT_CODE=0
-          # Use perl-based timeout (no gtimeout dependency)
           perl -e 'alarm shift; exec @ARGV' 5 dist/stAge.app/Contents/MacOS/stAge 2>&1 || EXIT_CODE=$?
           if [ $EXIT_CODE -eq 142 ]; then
             echo "✅ App launched successfully (timed out as expected)"
@@ -139,15 +138,19 @@ jobs:
             echo "Continuing build anyway..."
           fi
 
-      - name: Create DMG (optional)
+      - name: Create macOS zip
         run: |
-          echo "Skipping DMG creation - using .app bundle"
+          VERSION="${GITHUB_REF_NAME:-dev}"
+          mkdir -p release
+          # Zip the .app bundle preserving resource forks/attrs
+          ditto -c -k --sequesterRsrc --keepParent \
+            "dist/stAge.app" "release/stAge-${VERSION}-macos.zip"
 
-      - name: Upload macOS artifact
+      - name: Upload macOS zip artifact
         uses: actions/upload-artifact@v4
         with:
-          name: stAge-macOS
-          path: dist/stAge.app
+          name: stAge-macOS-zip
+          path: release/stAge-*-macos.zip
 
   build-linux:
     runs-on: ubuntu-latest
@@ -205,6 +208,7 @@ jobs:
 
       - name: Create ZIP archives
         run: |
+          set -e
           VERSION="${GITHUB_REF_NAME}"
 
           # Windows exe - simple single file
@@ -217,17 +221,12 @@ jobs:
           zip "../../stAge-${VERSION}-linux.zip" stAge
           cd ../..
 
-          # macOS .app bundle
-          cd artifacts/stAge-macOS
-          zip -r "../../stAge-${VERSION}-macos.zip" stAge.app
-          cd ../..
+          # macOS: already-zipped .app from macOS job
+          MACOS_ZIP=$(echo artifacts/stAge-macOS-zip/stAge-*-macos.zip)
+          cp "$MACOS_ZIP" "./stAge-${VERSION}-macos.zip"
 
           echo "=== Created archives ==="
           ls -lh *.zip
-          
-          echo ""
-          echo "=== Verifying macOS zip structure ==="
-          unzip -l "stAge-${VERSION}-macos.zip" | head -20
 
       - name: Create GitHub Release and upload assets
         uses: softprops/action-gh-release@v2
