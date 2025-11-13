@@ -1,13 +1,13 @@
 # stAge: Spatial Transcriptomics Aging Analysis
 
 <p align="center">
-  <img src="logo.svg" alt="pipeage logo" width="600"/>
+  <img src="logo.svg" alt="pipeage logo" width="200"/>
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.8+-blue.svg" alt="Python Version">
   <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License">
-  <img src="shields.io/github/v/release/yourusername/stAge" alt="Release">
+  <img src="shields.io/github/v/release/Gladyshev-Lab/stAge" alt="Release">
 </p>
 
 **stAge** is a professional desktop application for analyzing aging signatures in spatial transcriptomics data. Built with PyQt5 and powered by **tAge aging clocks**, stAge provides an intuitive interface for visualizing spatial gene expression patterns and aging-related features in tissue samples.
