@@ -1,10 +1,12 @@
-# Release v1.0.0
+# Release v1.0.1
 
-## 🎉 What's New
+## 🐛 Bug Fixes
 
-- First Version
+- GitHub Actions Fix
+- Icons Fix
+
 
 ---
 
-**Full Changelog**: https://github.com/https://github.com/Gladyshev-Lab/stAge/compare/v1.0.0
+**Full Changelog**: https://github.com/https://github.com/Gladyshev-Lab/stAge/compare/v1.0.1
 
