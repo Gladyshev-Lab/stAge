@@ -107,13 +107,16 @@ jobs:
           # Windows exe
           zip -j "stAge-${VERSION}-windows.zip" "artifacts/stAge-Windows/stAge.exe"
 
-          # macOS .app bundle
-          cd artifacts/stAge-macOS
-          zip -r "../../stAge-${VERSION}-macos.zip" "stAge.app"
-          cd ../../
-
-          # Linux бинарник
+          # Linux binary
           zip -j "stAge-${VERSION}-linux.zip" "artifacts/stAge-Linux/stAge"
+
+          # macOS .app bundle
+          cd artifacts
+          mkdir "stAge.app"
+          shopt -s dotglob nullglob  # Include hidden files (e.g., ._*), ignore if none
+          mv stAge-macOS/* stAge.app/ 2>/dev/null || true  # Move contents; ignore errors if empty
+          cd ..
+          zip -r "stAge-${VERSION}-macos.zip" "artifacts/stAge.app"
 
           ls -lh *.zip
 
