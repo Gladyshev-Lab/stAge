@@ -50,18 +50,6 @@ echo "📋 Generating CHANGELOG..."
 cat > RELEASE_NOTES.md << EOF
 # Release ${TAG}
 
-## 🎉 What's New
-
-- [Add new features here]
-
-## 🐛 Bug Fixes
-
-- [Add fixed bugs here]
-
-## 🔧 Improvements
-
-- [Add improvements here]
-
 ---
 
 **Full Changelog**: https://github.com/$(git config --get remote.origin.url | sed 's/.*github.com[:/]\(.*\)\.git/\1/')/compare/v${VERSION}

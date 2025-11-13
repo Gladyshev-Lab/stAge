@@ -3,7 +3,7 @@ name: Build & Release stAge
 on:
   push:
     tags:
-      - 'v*'       # например: v1.2.3
+      - 'v*'
   workflow_dispatch:
 
 jobs:
@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up Python
-      - uses: actions/setup-python@v5
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
@@ -107,7 +107,7 @@ jobs:
           # Windows exe
           zip -j "stAge-${VERSION}-windows.zip" "artifacts/stAge-Windows/stAge.exe"
 
-          # macOS .app bundle (нужен рекурсивный zip)
+          # macOS .app bundle
           cd artifacts/stAge-macOS
           zip -r "../../stAge-${VERSION}-macos.zip" "stAge.app"
           cd ../../
